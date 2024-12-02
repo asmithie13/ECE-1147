@@ -15,7 +15,10 @@ def data_preproc():
     #abortion training data
     filePath = os.path.join(dataIn, "abortion_train.csv")
     abortion_train_data = pd.read_csv(filePath)
-
+    abortion_train_data = abortion_train_data.mask(abortion_train_data == "oppose", False)
+    abortion_train_data = abortion_train_data.mask(abortion_train_data == "support", True)
+    abortion_train_data = abortion_train_data.mask(abortion_train_data == "no", False)
+    abortion_train_data = abortion_train_data.mask(abortion_train_data == "yes", True)
     #reading training images in abortion folder
     abortion_train_dict = {}
     for ind in range(abortion_train_data.shape[0]):
@@ -33,6 +36,10 @@ def data_preproc():
     #abortion dev data
     filePath = os.path.join(dataIn, "abortion_dev.csv")
     abortion_dev_data = pd.read_csv(filePath)
+    abortion_dev_data = abortion_dev_data.mask(abortion_dev_data == "oppose", False)
+    abortion_dev_data = abortion_dev_data.mask(abortion_dev_data == "support", True)
+    abortion_dev_data = abortion_dev_data.mask(abortion_dev_data == "no", False)
+    abortion_dev_data = abortion_dev_data.mask(abortion_dev_data == "yes", True)
 
     #reading training images in abortion folder
     abortion_dev_dict = {}
@@ -51,6 +58,10 @@ def data_preproc():
     #gun control train data
     filePath = os.path.join(dataIn, "gun_control_train.csv")
     gc_train_data = pd.read_csv(filePath)
+    gc_train_data = gc_train_data.mask(gc_train_data == "oppose", False)
+    gc_train_data = gc_train_data.mask(gc_train_data == "support", True)
+    gc_train_data = gc_train_data.mask(gc_train_data == "no", False)
+    gc_train_data = gc_train_data.mask(gc_train_data == "yes", True)
 
     #reading training images in gun control folder
     gc_train_dict = {}
@@ -69,6 +80,10 @@ def data_preproc():
     #gun control dev data
     filePath = os.path.join(dataIn, "gun_control_dev.csv")
     gc_dev_data = pd.read_csv(filePath)
+    gc_dev_data = gc_dev_data.mask(gc_dev_data == "oppose", False)
+    gc_dev_data = gc_dev_data.mask(gc_dev_data == "support", True)
+    gc_dev_data = gc_dev_data.mask(gc_dev_data == "no", False)
+    gc_dev_data = gc_dev_data.mask(gc_dev_data == "yes", True)
 
     #reading training images in gun control folder
     gc_dev_dict = {}
