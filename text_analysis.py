@@ -28,6 +28,8 @@ import torch
 
 abortion_train_data.insert(6, "list", abortion_train_data[abortion_train_data.columns[3:5]].to_numpy().tolist())
 abortion_train_feat = abortion_train_data[["tweet_text", "list"]].copy()
+abortion_dev_data.insert(6, "list", abortion_dev_data[abortion_dev_data.columns[3:5]].to_numpy().tolist())
+abortion_dev_feat = abortion_dev_data[["tweet_text", "list"]].copy()
 
 class CustomData(Dataset):
     def __init__(self, dataframe: pd.DataFrame, tokenizer, max_len):
@@ -65,12 +67,14 @@ EPOCHS = 1
 LEARNING_RATE = 1e-05
 train_size = .8
 device = 'cpu'
-
-training_data = abortion_train_feat.sample(frac=train_size, random_state=200)
-testing_data = abortion_train_feat.drop(training_data.index).reset_index(drop=True)
-training_data = training_data.reset_index(drop=True)
-
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+
+# training_data = abortion_train_feat.sample(frac=train_size, random_state=200)
+# testing_data = abortion_train_feat.drop(training_data.index).reset_index(drop=True)
+# training_data = training_data.reset_index(drop=True)
+training_data = abortion_train_feat
+testing_data = abortion_dev_feat
+
 training_set = CustomData(training_data, tokenizer, MAX_LEN)
 testing_set = CustomData(testing_data, tokenizer, MAX_LEN)
 
@@ -140,6 +144,37 @@ def validation(epoch):
             fin_targets.extend(targets.cpu().detach().numpy().tolist())
             fin_outputs.extend(torch.sigmoid(outputs).cpu().detach().numpy().tolist())
     return fin_outputs, fin_targets
+
+for epoch in range(EPOCHS):
+    outputs, targets = validation(epoch)
+    outputs = np.array(outputs) >= 0.5
+    accuracy = metrics.accuracy_score(targets, outputs)
+    f1_score_micro = metrics.f1_score(targets, outputs, average='micro')
+    f1_score_macro = metrics.f1_score(targets, outputs, average='macro')
+    print(f"Accuracy Score = {accuracy}")
+    print(f"F1 Score (Micro) = {f1_score_micro}")
+    print(f"F1 Score (Macro) = {f1_score_macro}")
+
+gc_train_data.insert(6, "list", gc_train_data[gc_train_data.columns[3:5]].to_numpy().tolist())
+gc_train_feat = gc_train_data[["tweet_text", "list"]].copy()
+gc_dev_data.insert(6, "list", gc_dev_data[gc_dev_data.columns[3:5]].to_numpy().tolist())
+gc_dev_feat = gc_dev_data[["tweet_text", "list"]].copy()
+    
+training_data = gc_train_feat
+testing_data = gc_dev_feat
+
+training_set = CustomData(training_data, tokenizer, MAX_LEN)
+testing_set = CustomData(testing_data, tokenizer, MAX_LEN)
+
+training_loader = DataLoader(training_set, **train_params)
+testing_loader = DataLoader(testing_set, **test_params)
+
+model = BERTClass()
+model.to(device)
+optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
+
+for epoch in range(EPOCHS):
+    train(epoch)
 
 for epoch in range(EPOCHS):
     outputs, targets = validation(epoch)
