@@ -63,8 +63,8 @@ class CustomData(Dataset):
 MAX_LEN = 200
 TRAIN_BATCH_SIZE = 64
 VALID_BATCH_SIZE = 32
-EPOCHS = 1
-LEARNING_RATE = 1e-05
+EPOCHS = 5
+LEARNING_RATE = 1e-03
 train_size = .8
 device = 'cpu'
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
@@ -163,28 +163,28 @@ gc_dev_feat = gc_dev_data[["tweet_text", "list"]].copy()
 training_data = gc_train_feat
 testing_data = gc_dev_feat
 
-training_set = CustomData(training_data, tokenizer, MAX_LEN)
-testing_set = CustomData(testing_data, tokenizer, MAX_LEN)
+# training_set = CustomData(training_data, tokenizer, MAX_LEN)
+# testing_set = CustomData(testing_data, tokenizer, MAX_LEN)
 
-training_loader = DataLoader(training_set, **train_params)
-testing_loader = DataLoader(testing_set, **test_params)
+# training_loader = DataLoader(training_set, **train_params)
+# testing_loader = DataLoader(testing_set, **test_params)
 
-model = BERTClass()
-model.to(device)
-optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
+# model = BERTClass()
+# model.to(device)
+# optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
 
-for epoch in range(EPOCHS):
-    train(epoch)
+# for epoch in range(EPOCHS):
+#     train(epoch)
 
-for epoch in range(EPOCHS):
-    outputs, targets = validation(epoch)
-    outputs = np.array(outputs) >= 0.5
-    accuracy = metrics.accuracy_score(targets, outputs)
-    f1_score_micro = metrics.f1_score(targets, outputs, average='micro')
-    f1_score_macro = metrics.f1_score(targets, outputs, average='macro')
-    print(f"Accuracy Score = {accuracy}")
-    print(f"F1 Score (Micro) = {f1_score_micro}")
-    print(f"F1 Score (Macro) = {f1_score_macro}")
+# for epoch in range(EPOCHS):
+#     outputs, targets = validation(epoch)
+#     outputs = np.array(outputs) >= 0.5
+#     accuracy = metrics.accuracy_score(targets, outputs)
+#     f1_score_micro = metrics.f1_score(targets, outputs, average='micro')
+#     f1_score_macro = metrics.f1_score(targets, outputs, average='macro')
+#     print(f"Accuracy Score = {accuracy}")
+#     print(f"F1 Score (Micro) = {f1_score_micro}")
+#     print(f"F1 Score (Macro) = {f1_score_macro}")
 
 absPath = os.path.dirname(__file__)
 imgIn = os.path.join(absPath, "data/images/")
