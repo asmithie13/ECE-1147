@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import argparse
 import requests
@@ -7,7 +8,14 @@ import json
 import sys
 import pandas as pd
 
-# note: including the start server code in this script for demo purposes. You might want to seperately start the server so that you're not starting the server every time you make the call. 
+# LlaVA 1.6
+
+
+# TODO:
+    # - run llava without examples
+    # - prompt with 1-10 examples then run
+    # - reprompt with examples every ten data pieces
+
 def get_gun_data():
     examples = []
     print(examples)
@@ -62,7 +70,7 @@ def start_ollama_server():
     try:
         subprocess.Popen(["ollama", "run", "llava"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         print("Starting Ollama server with LLaVa...")
-        time.sleep(5)  # Wait a bit for the server to start
+        time.sleep(5) 
     except FileNotFoundError:
         print("Error: Ollama is not installed or not in the PATH.")
         sys.exit(1)
@@ -104,57 +112,98 @@ def prompt_with_examples(prompt, examples=[]):
 
     return full_prompt
 
-def analyze_image(image_path, tweet, custom_prompt=None):
+def analyze_image(image_path, tweet, prompt):
+    
     url = "http://localhost:11434/api/generate"
     image_base64 = encode_image_to_base64(image_path)
 
-    prompt = f"""
-    You are analyzing whether an image improves the persuasiveness of a tweet by providing context or propaganda.
+    # prompt = f"""
+    # You are analyzing whether an image improves the persuasiveness of a tweet.
 
-    Tweet: "{tweet}"
-    Image: [Attached Image]
+    # Tweet: "{tweet}"
+    # Image: [Attached Image]
 
-    Question: Does the image improve the persuasiveness of the tweet? 
-    Respond strictly with: **Yes** or **No** """
+    # Question: Does the image improve the persuasiveness of the tweet? 
+    # Respond strictly with: **NO** or **YES** """
+
 
     payload = {
         "model": "llava",
-        "prompt": custom_prompt,
+        "prompt": prompt,
+        "tweet": [tweet],
         "images": [image_base64]
     }
 
-    response = requests.post(url, json=payload)
-    #print("Raw Response:", response.text)
-
+    # print("Raw Response:", response.text)
+    logging.debug(f"Payload: {json.dumps(payload, indent=4)}")
+    logging.basicConfig(level=logging.DEBUG)
+    #     return f"Error: {e}"
     try:
-        response_lines = response.text.strip().split('\n')
-        full_response = ''.join(json.loads(line)['response'] for line in response_lines if 'response' in json.loads(line))
+        response = requests.post(url, json=payload, timeout=600)
+        response.raise_for_status()
+        # print("Raw Response: ", response.text)
+        # with open("rawresults.txt", "w") as f:
+        #     print(response.text, file=f)
 
-        return full_response
-    except Exception as e:
+        # Parse and accumulate fragments
+        raw_lines = response.text.strip().split('\n')
+        complete_response = ""
+
+        for line in raw_lines:
+            try:
+                parsed_line = json.loads(line)
+                complete_response += parsed_line.get("response", "")
+                if parsed_line.get("done"):
+                    break
+            except json.JSONDecodeError as e:
+                logging.warning(f"Skipping invalid JSON line: {line} - Error: {e}")
+
+        return complete_response.strip() if complete_response else "No valid response found."
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Request error: {e}")
         return f"Error: {e}"
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='LLaVA Image Analysis')
-    parser.add_argument('-i', '--image', required=True, help='Path to the image file')
-    parser.add_argument('-p', '--prompt', default='Does this image improve the persuasiveness of the tweet? Answer yes or no', help='Custom prompt for image analysis')
-    return parser.parse_args()
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+        return f"Error: {e}" 
+
 
 if __name__ == "__main__":
     #args = parse_arguments()
 
+    results = []
     examples = get_example_gun_data()
     realdata = get_gun_data()
     #start_ollama_server()
   
-    prompt = "Does the image improve the persuasiveness of the tweet? Answer 'yes' or 'no'."
+    prompt = f"""
+    You are analyzing whether an image improves the persuasiveness of a tweet.
+    Pay attention to whether the image provides context or statistics to the topic listed in the tweet.
 
+    Tweet: [Attached Tweet]
+    Image: [Attached Image]
 
-    i=65
+    Question: Does the image improve the persuasiveness of the tweet? 
+    Respond strictly with: **NO** or **YES** """
+
+    examples = [tuple(example) for example in examples]
+    prompt = prompt_with_examples(prompt,examples[:10])
+    print(examples[:5])
+    
+    i=0
+
     for i in range(len(realdata)):
-        prompt_with_examples(prompt,examples)
-        print(realdata[i][1])
-        print("data/images/gun_control/" + str(realdata[i][0]))
-        result = analyze_image("data/images/gun_control/" + '1369651557285982214.jpg', realdata[i][1], "Does this image improve the persuasiveness of the tweet? Answer 'yes' or 'no'")
+        print(i)
+        imageeeeee = ("data/images/gun_control/" + str(realdata[i][0]))
+        result = analyze_image(imageeeeee, realdata[i][1], prompt)
         print(" Response:", result)
+        results.append(result)
+    print(results)
+
+    with open("results.txt", "w") as f:
+        for b in range(len(results)):
+            print(results[b], file=f)
+        #8:35
+
 
