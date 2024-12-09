@@ -170,7 +170,6 @@ def analyze_image(image_path, tweet, prompt):
 
 
 if __name__ == "__main__":
-    #args = parse_arguments()
 
     results = []
     examples = get_example_gun_data()
@@ -179,7 +178,6 @@ if __name__ == "__main__":
   
     prompt = f"""
     You are analyzing whether an image improves the persuasiveness of a tweet.
-    Pay attention to whether the image provides context or statistics to the topic listed in the tweet.
 
     Tweet: [Attached Tweet]
     Image: [Attached Image]
@@ -204,6 +202,5 @@ if __name__ == "__main__":
     with open("results.txt", "w") as f:
         for b in range(len(results)):
             print(results[b], file=f)
-        #8:35
 
 
